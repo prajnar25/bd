@@ -1,0 +1,63 @@
+Program7- USE Hive to Create, alter and drop databases, tables.
+
+Step 1: Cmd, Right click, Run as administrator 
+Type- start-all.cmd
+Minimize all screens
+
+Step 2:: Cmd, Right click, Run as administrator 
+Type- StartNetworkServer -h 0.0.0.0
+Minimize the screen
+
+Step 3 : Cmd, Right click, Run as administrator 
+Type- cd C:\hive\bin
+      hive
+hive>
+
+
+hive >CREATE DATABASE IF NOT EXISTS database_usn;
+hive >USE database_usn;
+
+hive >show databases;
+
+CREATE TABLE IF NOT EXISTS student (
+    id INT,
+    name STRING,
+    age INT,
+    department STRING,
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+hive > DESCRIBE student;
+
+hive >INSERT INTO TABLE student
+VALUES (1, 'John Doe', 20, 'Engineering'),
+(2, 'Jane Smith', 22, 'Marketing'),
+(3, 'Michael Johnson', 21, 'Sales'),
+(4, 'Emily Davis', 23, 'HR'),
+(5, 'James Brown', 24, 'Finance');
+
+SELECT * FROM student;
+
+Since Hive doesn't support direct row deletion, we'll overwrite the table excluding the row you want to delete.
+Hive >INSERT OVERWRITE TABLE student
+SELECT * FROM student WHERE id != 2;
+
+SELECT * FROM student;
+
+
+ALTER TABLE student ADD COLUMNS(semester INT);   //By default NULL values are assigned for semester
+
+INSERT OVERWRITE TABLE student
+SELECT id,name,age,department,'6' AS semester FROM student;
+
+SELECT *FROM student;
+
+
+DROP TABLE student;
+
+
+DROP DATABASE database_usn;
+
+
