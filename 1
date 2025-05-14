@@ -1,0 +1,233 @@
+#Steps: gedit mongodb_crud.py--Save the Program.
+#pip3 install pymongo
+#sudo systemctl start mongod
+#python3 mongodb_crud.py
+
+
+
+
+from pymongo import MongoClient
+
+client = MongoClient("mongodb://localhost:27017/")
+db = client["mydatabase"]
+collection = db["mycollection"]
+
+
+def create_documents():
+    count = int(input("How many documents do you want to insert? "))
+    for i in range(count):
+        name = input("Enter name: ")
+        age = int(input("Enter age: "))
+        city = input("Enter city: ")
+        document = {"name": name, "age": age, "city": city}
+        collection.insert_one(document)
+    print("Documents inserted successfully.")
+
+def read_documents():
+    documents = list(collection.find())
+    if not documents:
+        print("Collection is empty.")
+    else:
+        for doc in documents:
+            print(doc)
+
+def update_document():
+    name = input("Enter the name of the document to update: ")
+    field = input("Which field do you want to update? (name/age/city): ")
+    
+    if field not in ["name", "age", "city"]:
+        print("Invalid field. Please enter 'name', 'age', or 'city'.")
+        return
+    
+    if field == "age":
+        new_value = int(input("Enter new age: "))
+    else:
+        new_value = input(f"Enter new value for {field}: ")
+    
+    query = {"name": name}
+    new_values = {"$set": {field: new_value}}
+    result = collection.update_one(query, new_values)
+    if result.modified_count > 0:
+        print("Document updated successfully.")
+    else:
+        print("No matching document found.")
+
+def delete_document():
+    name = input("Enter the name of the document to delete: ")
+    query = {"name": name}
+    result = collection.delete_one(query)
+    if result.deleted_count > 0:
+        print("Document deleted successfully.")
+    else:
+        print("No matching document found.")
+
+def menu():
+    while True:
+        print("\nMongoDB CRUD Operations Menu")
+        print("1. Create Documents")
+        print("2. Read Documents")
+        print("3. Update Document")
+        print("4. Delete Document")
+        print("5. Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == "1":
+            create_documents()
+        elif choice == "2":
+            read_documents()
+        elif choice == "3":
+            update_document()
+        elif choice == "4":
+            delete_document()
+        elif choice == "5":
+            print("Exiting...")
+            break
+        else:
+            print("Invalid choice. Please enter a number between 1 and 5.")
+
+if __name__ == "__main__":
+    menu()
+
+
+
+
+
+
+
+
+
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.ml.feature.{VectorAssembler, StandardScaler}
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.evaluation.ClusteringEvaluator
+
+val spark = SparkSession.builder
+  .appName("KMeansClusteringExample")
+  .getOrCreate()
+
+import spark.implicits._
+
+val data = Seq(
+  (25, 50000, 60),
+  (30, 60000, 70),
+  (35, 75000, 80),
+  (20, 30000, 50),
+  (40, 80000, 90),
+  (45, 90000, 85),
+  (28, 55000, 65),
+  (32, 65000, 75)
+)
+
+val df = data.toDF("age", "income", "spending_score")
+
+val assembler = new VectorAssembler()
+  .setInputCols(Array("age", "income", "spending_score"))
+  .setOutputCol("features")
+
+val assembledDF = assembler.transform(df)
+
+val scaler = new StandardScaler()
+  .setInputCol("features")
+  .setOutputCol("scaled_features")
+  .setWithStd(true)
+  .setWithMean(true)
+
+val scalerModel = scaler.fit(assembledDF)
+val scaledDF = scalerModel.transform(assembledDF)
+
+val kmeans = new KMeans()
+  .setFeaturesCol("scaled_features")
+  .setPredictionCol("cluster")
+  .setK(3)
+  .setSeed(42)
+
+val model = kmeans.fit(scaledDF)
+
+val predictions = model.transform(scaledDF)
+
+val evaluator = new ClusteringEvaluator()
+  .setPredictionCol("cluster")
+  .setFeaturesCol("scaled_features")
+  .setMetricName("silhouette")
+
+val silhouetteScore = evaluator.evaluate(predictions)
+
+println(s"Silhouette Score: $silhouetteScore")
+predictions.select("age", "income", "spending_score", "cluster").show()
+
+spark.stop()
+
+
+
+
+
+
+
+
+
+
+'6.Write Pig Latin scripts to implement sort, group, join, and project and filter the data
+operations.
+
+(create 3 text files)
+// data.txt
+John,25,New York
+Alice,30,Los Angeles
+Bob,35,Chicago
+Eve,28,Boston
+Mark,40,Miami
+//data1.txt
+1,John
+2,Alice
+3,Bob
+4,Eve
+5,Mark
+//data2.txt
+1,25
+2,30
+3,35
+4,28
+5,40
+
+Create Script FIle Ex:script.pig
+
+data = LOAD 'data.txt' USING PigStorage(',') AS (name:chararray, age:int, city:chararray);
+sorted_data = ORDER data BY age DESC;
+grouped_data = GROUP data BY age;
+data1 = LOAD 'data1.txt' USING PigStorage(',') AS (id:int, name:chararray);
+data2 = LOAD 'data2.txt' USING PigStorage(',') AS (id:int, age:int);
+joined_data = JOIN data1 BY id, data2 BY id;
+projected_data = FOREACH data GENERATE name, age;
+filtered_data = FILTER data BY age > 30;
+STORE sorted_data INTO 'sorted_data_output' USING PigStorage(',');
+STORE grouped_data INTO 'grouped_data_output' USING PigStorage(',');
+STORE joined_data INTO 'joined_data_output' USING PigStorage(',');
+STORE projected_data INTO 'projected_data_output' USING PigStorage(',');
+STORE filtered_data INTO 'filtered_data_output' USING PigStorage(',');
+
+
+Run the command- pig -x local script.pig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
