@@ -1,0 +1,86 @@
+import org.apache.hadoop.conf.Configuration; 
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.io.Text; 
+import org.apache.hadoop.mapreduce.Job; 
+import org.apache.hadoop.mapreduce.Mapper; 
+import org.apache.hadoop.mapreduce.Reducer; 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; 
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; 
+import java.io.IOException; 
+public class StudentGrades { 
+public static class GradesMapper extends Mapper<Object, Text, Text, Text> { 
+private Text studentName = new Text(); 
+private Text letterGrade = new Text(); 
+public void map(Object key, Text value, Context context) throws IOException, 
+InterruptedException { 
+String[] tokens = value.toString().split("\\s+"); 
+studentName.set(tokens[0]); 
+for (int i = 1; i < tokens.length; i++) { 
+int grade = Integer.parseInt(tokens[i]); 
+if (grade >= 90) { 
+letterGrade.set("O"); 
+} else if (grade >= 80) { 
+letterGrade.set("A+"); 
+} else if (grade >= 70) { 
+letterGrade.set("A"); 
+} else if (grade >= 60) { 
+letterGrade.set("B+"); 
+} else if (grade >= 50) { 
+letterGrade.set("B"); 
+} else if (grade >= 40) { 
+letterGrade.set("C"); 
+} else { 
+letterGrade.set("Fail"); 
+} 
+context.write(studentName, letterGrade); 
+} 
+} 
+} 
+public static class GradesReducer extends Reducer<Text, Text, Text, Text> { 
+public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, 
+InterruptedException { 
+StringBuilder letterGrades = new StringBuilder(); 
+for (Text val : values) { 
+letterGrades.append(val.toString()).append(" "); 
+} 
+context.write(new Text(String.format("| %-15s | %-20s |", key.toString(), 
+letterGrades.toString().trim())), null); 
+} 
+} 
+public static void main(String[] args) throws Exception { 
+Configuration conf = new Configuration(); 
+Job job = Job.getInstance(conf, "Student Grades"); 
+job.setJarByClass(StudentGrades.class); 
+job.setMapperClass(GradesMapper.class); 
+job.setReducerClass(GradesReducer.class); 
+job.setOutputKeyClass(Text.class); 
+job.setOutputValueClass(Text.class); 
+FileInputFormat.addInputPath(job, new Path(args[0])); 
+FileOutputFormat.setOutputPath(job, new Path(args[1])); 
+System.exit(job.waitForCompletion(true) ? 0 : 1); 
+} 
+} 
+Execution Steps  
+mkdir usn_prog3 
+cd usn_prog3 
+gedit StudentGrades.java 
+start-all.sh 
+jps 
+export HADOOP_CLASSPATH=$(hadoop classpath) 
+mkdir Input  
+cd Input 
+gedit grades.txt 
+Anusha 85 92 78 
+Alice 90 88 95 
+Bob 40 72 60 
+David 30 35 50 
+cd ..   
+hadoop fs -mkdir /grades_usn 
+hadoop fs -mkdir /grades_usn/Input 
+hadoop fs -put ./Input/grades.txt/ /grades_usn/Input 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 
+export PATH=$JAVA_HOME/bin:$PATH 
+javac -classpath $(hadoop classpath) -d . StudentGrades.java 
+jar -cvf grades.jar  -C  . . 
+hadoop jar grades.jar  StudentGrades  /grades_usn/Input  /grades_usn/Input/output 
+hadoop fs -cat /grades_usn/Input/output/part-r-00000
